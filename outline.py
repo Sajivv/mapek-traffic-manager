@@ -1,7 +1,7 @@
 import cityflow
 
 
-def analyzer():
+def planner():
      pass
 
 def heuristic():
@@ -45,9 +45,9 @@ if __name__=="__main__":
 
 
             # Analyze
-            analyzer()
-            # Plan
             heuristic()
+            # Plan
+            planner()
             # Actions
 
             # for vehicle in vehicles:
