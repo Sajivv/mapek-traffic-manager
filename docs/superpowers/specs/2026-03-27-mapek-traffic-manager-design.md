@@ -26,9 +26,9 @@ Existing files unchanged: `config.json`, `roadnet.json`, `flow.json`.
 ```python
 @dataclass
 class Knowledge:
-    # Policy
-    min_green: int = 10
-    max_green: int = 60
+    # Policy (tunable parameters for experimentation)
+    min_green: int = 5
+    max_green: int = 45
     # Runtime (per intersection)
     current_phase: dict[str, int]
     phase_timer: dict[str, int]
@@ -61,8 +61,8 @@ Stores `self.best_phases: dict[str, int]`.
 
 ### Plan
 If best phase differs from current, plan the switch to that phase directly.
-Force switch if `phase_timer >= max_green + yellow_time`; use best phase if available, else round-robin.
-All timer thresholds account for yellow_time (from config.json).
+Force switch if `phase_timer >= max_green`; use round-robin as starvation guard.
+Note: CityFlow handles yellow time internally when `rlTrafficLight=true`; agents do not add yellow offset to timers.
 
 Stores `self.planned_phases: dict[str, int]`.
 
