@@ -83,7 +83,7 @@ eng.next_step()              # advance CityFlow
 datacollector.collect(self)  # record metrics
 ```
 
-Baseline mode: FixedTimingAgent cycles phases every 35+yellowTime steps (matching roadnet.json timing). Required because `rlTrafficLight=true` disables CityFlow's internal signal controller.
+Baseline mode: FixedTimingAgent cycles phases every 35 steps (matching roadnet.json `time` field). CityFlow handles yellow transitions internally when `rlTrafficLight=true`. Required because `rlTrafficLight=true` disables CityFlow's internal signal controller.
 
 ## Topology Parsing
 

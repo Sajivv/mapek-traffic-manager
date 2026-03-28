@@ -46,6 +46,9 @@ class ManagerAgent(mesa.Agent):
         self.planned_phases: dict[str, int] = {}
 
     def step(self):
+        # Increment timers first (matches FixedTimingAgent's increment-then-check)
+        for iid in self.knowledge.intersection_ids:
+            self.knowledge.phase_timer[iid] += 1
         self.monitor()
         self.analyze()
         self.plan()
@@ -101,7 +104,6 @@ class ManagerAgent(mesa.Agent):
         k = self.knowledge
         eng = self.model.engine
         for iid in k.intersection_ids:
-            k.phase_timer[iid] += 1
             if iid in self.planned_phases:
                 eng.set_tl_phase(iid, self.planned_phases[iid])
                 k.current_phase[iid] = self.planned_phases[iid]
