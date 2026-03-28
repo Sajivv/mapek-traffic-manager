@@ -72,7 +72,7 @@ For each planned phase change:
 - Reset `knowledge.phase_timer[id] = 0`
 - Update `knowledge.current_phase[id]`
 
-Increment `phase_timer` for non-switched intersections.
+Timer increment happens at the start of `ManagerAgent.step()` for all intersections (matching FixedTimingAgent's increment-then-check). Execute only resets switched intersections to 0.
 
 ## TrafficModel.step()
 
