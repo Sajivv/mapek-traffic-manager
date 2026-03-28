@@ -1,7 +1,8 @@
 import json
+import os
 import mesa
 import cityflow
-from agents import Knowledge, ManagerAgent
+from agents import Knowledge, ManagerAgent, FixedTimingAgent
 
 class TrafficModel(mesa.Model):
     def __init__(self, config_path="config.json", strategy=None, seed=42):
@@ -10,11 +11,11 @@ class TrafficModel(mesa.Model):
         self.engine.set_random_seed(seed)
         self.strategy = strategy
 
+        knowledge = self._build_knowledge(config_path)
         if strategy:
-            knowledge = self._build_knowledge(config_path)
             self.manager = ManagerAgent(self, knowledge, strategy=strategy)
         else:
-            self.manager = None
+            self.manager = FixedTimingAgent(self, knowledge)
 
         self.datacollector = mesa.DataCollector(
             model_reporters={
@@ -27,7 +28,7 @@ class TrafficModel(mesa.Model):
     def _build_knowledge(self, config_path):
         with open(config_path) as f:
             cfg = json.load(f)
-        roadnet_path = cfg.get("dir", "./") + cfg["roadnetFile"]
+        roadnet_path = os.path.join(cfg.get("dir", "."), cfg["roadnetFile"])
         with open(roadnet_path) as f:
             net = json.load(f)
 
@@ -67,7 +68,6 @@ class TrafficModel(mesa.Model):
         )
 
     def step(self):
-        if self.manager:
-            self.manager.step()
+        self.manager.step()
         self.engine.next_step()
         self.datacollector.collect(self)

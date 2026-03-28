@@ -7,11 +7,30 @@ import mesa
 class Knowledge:
     min_green: int = 10
     max_green: int = 60
-    intersection_ids: list = field(default_factory=list)
-    phase_lanes: dict = field(default_factory=dict)
-    downstream_lanes: dict = field(default_factory=dict)
-    current_phase: dict = field(default_factory=dict)
-    phase_timer: dict = field(default_factory=dict)
+    intersection_ids: list[str] = field(default_factory=list)
+    phase_lanes: dict[str, dict[int, list[str]]] = field(default_factory=dict)
+    downstream_lanes: dict[str, dict[int, list[str]]] = field(default_factory=dict)
+    current_phase: dict[str, int] = field(default_factory=dict)
+    phase_timer: dict[str, int] = field(default_factory=dict)
+
+
+class FixedTimingAgent(mesa.Agent):
+    """Baseline: cycles phases on a fixed timer matching roadnet.json timing."""
+    def __init__(self, model, knowledge, phase_duration=35):
+        super().__init__(model)
+        self.knowledge = knowledge
+        self.phase_duration = phase_duration
+
+    def step(self):
+        k = self.knowledge
+        eng = self.model.engine
+        for iid in k.intersection_ids:
+            k.phase_timer[iid] += 1
+            if k.phase_timer[iid] >= self.phase_duration:
+                num_phases = len(k.phase_lanes[iid])
+                k.current_phase[iid] = (k.current_phase[iid] + 1) % num_phases
+                eng.set_tl_phase(iid, k.current_phase[iid])
+                k.phase_timer[iid] = 0
 
 
 class ManagerAgent(mesa.Agent):
