@@ -5,7 +5,7 @@
   "roadnetFile": "roadnet.json",
   "flowFile": "flow.json",
   "laneChange": false,
-  "saveReplay": true,
+  "saveReplay": false,
   "replayLogFile": "replay.txt",
   "roadnetLogFile": "roadnet_log.json",
   "warning": true,
