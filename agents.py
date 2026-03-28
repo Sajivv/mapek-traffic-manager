@@ -69,17 +69,18 @@ class ManagerAgent(mesa.Agent):
             if k.phase_timer[iid] < k.min_green:
                 self.best_phases[iid] = current
                 continue
-            # Compute pressure per phase; prefer current on ties
+            # Compute current phase pressure as baseline; others must strictly exceed
+            cur_up = sum(waiting.get(l, 0) for l in k.phase_lanes[iid][current])
+            cur_dn = sum(waiting.get(l, 0) for l in k.downstream_lanes[iid][current])
             best_phase = current
-            best_pressure = -float("inf")
+            best_pressure = cur_up - cur_dn
             for phase_idx in range(num_phases):
+                if phase_idx == current:
+                    continue
                 upstream = sum(waiting.get(l, 0) for l in k.phase_lanes[iid][phase_idx])
                 downstream = sum(waiting.get(l, 0) for l in k.downstream_lanes[iid][phase_idx])
                 pressure = upstream - downstream
-                if phase_idx == current:
-                    best_pressure = pressure
-                    best_phase = current
-                elif pressure > best_pressure:
+                if pressure > best_pressure:
                     best_pressure = pressure
                     best_phase = phase_idx
             self.best_phases[iid] = best_phase
