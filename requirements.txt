@@ -1,3 +1,6 @@
 cityflow
 mesa>=3.0
+numpy
 pandas
+matplotlib>=3.9
+tqdm
