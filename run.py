@@ -8,7 +8,7 @@ from model import TrafficModel
 from plots import generate_plots
 
 STEPS = 3600
-N_RUNS = 1000
+N_RUNS = 100
 
 SCENARIOS = [
     ("base", "config.json"),
