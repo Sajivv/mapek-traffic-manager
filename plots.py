@@ -7,7 +7,21 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-COLORS = {"baseline": "tab:blue", "mapek": "tab:orange"}
+COLORS = {"baseline": "tab:blue", "pressure": "tab:gray", "mapek": "tab:orange"}
+
+METRICS = [
+    ("vehicle_count", "Vehicle Count"),
+    ("total_waiting", "Total Waiting Vehicles"),
+    ("avg_travel_time", "Avg Travel Time (s)"),
+    ("network_pressure", "Network Pressure"),
+    ("total_switches", "Phase Switches"),
+    ("active_upstream_waiting", "Active Upstream Waiting"),
+    ("active_downstream_waiting", "Active Downstream Waiting"),
+    ("active_score", "Active Score"),
+    ("pressure_weight", "Pressure Weight"),
+    ("downstream_weight", "Downstream Weight"),
+    ("switch_weight", "Switch Weight"),
+]
 
 
 def generate_plots(csv_path="results.csv", out_dir=".", prefix="plot"):
@@ -15,42 +29,47 @@ def generate_plots(csv_path="results.csv", out_dir=".", prefix="plot"):
     n_seeds = df["seed"].nunique()
     strategies = df["strategy"].unique()
 
-    ts = _plot_timeseries(df, n_seeds, strategies, out_dir, prefix)
-    bars = _plot_bars(df, strategies, out_dir, prefix)
-    box = _plot_boxplot(df, strategies, out_dir, prefix)
-    print(f"Plots saved: {ts}, {bars}, {box}")
+    paths = []
+    paths.append(_plot_bars(df, strategies, out_dir, prefix))
+    paths.append(_plot_boxplot(df, strategies, out_dir, prefix))
+
+    for col, label in METRICS:
+        if col in df.columns:
+            paths.append(_plot_metric_timeseries(df, n_seeds, strategies, col, label, out_dir, prefix))
+
+    print(f"Plots saved to {out_dir}/ ({len(paths)} files)")
 
 
-def _plot_timeseries(df, n_seeds, strategies, out_dir, prefix):
-    """Plot A: avg_travel_time over steps with 95% CI bands."""
+def _plot_metric_timeseries(df, n_seeds, strategies, metric, ylabel, out_dir, prefix):
+    """Time-series plot for a single metric with 95% CI bands."""
     fig, ax = plt.subplots(figsize=(10, 5))
 
     for strat in strategies:
         sub = df[df["strategy"] == strat]
-        grouped = sub.groupby("step")["avg_travel_time"]
+        grouped = sub.groupby("step")[metric]
         mean = grouped.mean()
         if n_seeds > 1:
             ci = 1.96 * grouped.std() / np.sqrt(n_seeds)
         else:
             ci = 0
 
-        ax.plot(mean.index, mean.values, label=strat, color=COLORS.get(strat, "tab:gray"))
+        ax.plot(mean.index, mean.values, label=strat, color=COLORS.get(strat, "tab:red"))
         ax.fill_between(mean.index, mean - ci, mean + ci, alpha=0.2,
-                        color=COLORS.get(strat, "tab:gray"))
+                        color=COLORS.get(strat, "tab:red"))
 
     ax.set_xlabel("Simulation Step")
-    ax.set_ylabel("Avg Travel Time (s)")
-    ax.set_title("Average Travel Time Over Simulation (95% CI)")
+    ax.set_ylabel(ylabel)
+    ax.set_title(f"{ylabel} Over Simulation (95% CI)")
     ax.legend()
     fig.tight_layout()
-    path = os.path.join(out_dir, f"{prefix}_timeseries.png")
+    path = os.path.join(out_dir, f"{prefix}_{metric}.png")
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path
 
 
 def _plot_bars(df, strategies, out_dir, prefix):
-    """Plot B: bar chart of mean metrics with 95% CI error bars."""
+    """Bar chart of mean metrics with 95% CI error bars."""
     metrics = ["avg_travel_time", "total_waiting", "vehicle_count"]
     labels = ["Avg Travel Time (s)", "Total Waiting", "Vehicle Count"]
 
@@ -71,7 +90,7 @@ def _plot_bars(df, strategies, out_dir, prefix):
             else:
                 cis.append(0)
         ax.bar(x, means, 0.5, yerr=cis, capsize=5,
-               color=[COLORS.get(s, "tab:gray") for s in strategies])
+               color=[COLORS.get(s, "tab:red") for s in strategies])
         ax.set_xticks(x)
         ax.set_xticklabels(strategies)
         ax.set_ylabel(label)
@@ -85,7 +104,7 @@ def _plot_bars(df, strategies, out_dir, prefix):
 
 
 def _plot_boxplot(df, strategies, out_dir, prefix):
-    """Plot C: box plot of final avg_travel_time across seeds."""
+    """Box plot of final avg_travel_time across seeds."""
     last_step = df["step"].max()
     final = df[df["step"] == last_step]
 
@@ -94,7 +113,7 @@ def _plot_boxplot(df, strategies, out_dir, prefix):
             for s in strategies]
     bp = ax.boxplot(data, tick_labels=strategies, patch_artist=True)
     for patch, strat in zip(bp["boxes"], strategies):
-        patch.set_facecolor(COLORS.get(strat, "tab:gray"))
+        patch.set_facecolor(COLORS.get(strat, "tab:red"))
         patch.set_alpha(0.6)
 
     ax.set_ylabel("Final Avg Travel Time (s)")
